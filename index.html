@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MagicBlocks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hint {
+      text-align: center;
+      padding: 8px 6px 6px;
+      font-size: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .hint-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .arrow {
+      font-size: 16px;
+      margin: 0 2px;
+    }
+
+    .grid {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      flex: 1;
+      padding: 6px;
+      box-sizing: border-box;
+      gap: 6px;
+    }
+
+    .face {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      aspect-ratio: 1 / 1;
+      gap: 2px;
+      background: #222;
+      border-radius: 10px;
+      padding: 2px;
+      box-sizing: border-box;
+      width: calc((100vw - 48px) / 6);
+    }
+
+    .cell {
+      border-radius: 4px;
+      transition: background 0.3s;
+      width: 100%;
+      height: 100%;
+    }
+
+    .red    { background: red; }
+    .green  { background: green; }
+    .blue   { background: blue; }
+    .yellow { background: yellow; }
+    .orange { background: orange; }
+    .white  { background: white; }
+  </style>
+</head>
+<body>
+  <div class="hint" id="hint"></div>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const colors = ['red', 'green', 'blue', 'yellow', 'orange', 'white'];
+    const maxPerColor = 9;
+    const grid = document.getElementById('grid');
+    const hint = document.getElementById('hint');
+    const faces = [];
+    const colorPool = colors.flatMap(c => Array(maxPerColor).fill(c)).sort(() => Math.random() - 0.5);
+
+    // Подсказка
+    colors.forEach((color, i) => {
+      const box = document.createElement('span');
+      box.className = 'hint-box ' + color;
+      hint.appendChild(box);
+
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.textContent = '→';
+      hint.appendChild(arrow);
+    });
+    // Повтор первого для цикла
+    const firstBox = document.createElement('span');
+    firstBox.className = 'hint-box ' + colors[0];
+    hint.appendChild(firstBox);
+
+    // Создание 6 граней
+    for (let f = 0; f < 6; f++) {
+      const face = document.createElement('div');
+      face.className = 'face';
+      face.dataset.index = f;
+      const faceCells = [];
+
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        const color = colorPool.pop();
+        cell.classList.add(color);
+        face.appendChild(cell);
+        faceCells.push(cell);
+      }
+
+      faces.push(faceCells);
+      grid.appendChild(face);
+    }
+
+    // Обработка смены цвета
+    faces.forEach((faceCells, faceIndex) => {
+      faceCells.forEach(cell => {
+        cell.addEventListener('click', () => {
+          const currentColor = colors.find(c => cell.classList.contains(c));
+          const currentIndex = colors.indexOf(currentColor);
+          const nextColor = colors[(currentIndex + 1) % colors.length];
+
+          // Поиск ближайшей грани с ячейкой nextColor
+          let targetFaceIndex = (faceIndex + 1) % 6;
+          let searched = 0;
+          let targetCell = null;
+
+          while (searched < 6) {
+            const candidate = faces[targetFaceIndex].find(c => c.classList.contains(nextColor));
+            if (candidate) {
+              targetCell = candidate;
+              break;
+            }
+            targetFaceIndex = (targetFaceIndex + 1) % 6;
+            searched++;
+          }
+
+          if (targetCell) {
+            targetCell.classList.remove(nextColor);
+            targetCell.classList.add(currentColor);
+          }
+
+          // Смена цвета в текущей ячейке
+          cell.classList.remove(currentColor);
+          cell.classList.add(nextColor);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
